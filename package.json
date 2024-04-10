@@ -1,5 +1,5 @@
 {
-  "name": "koishi-plugin-onlytest",
+  "name": "koishi-plugin-onlytest-flyneverride",
   "description": "xx",
   "version": "0.0.1",
   "main": "lib/index.js",
@@ -9,13 +9,20 @@
     "dist"
   ],
   "license": "MIT",
-  "scripts": {},
+
+  "koishi": {
+    "description": {
+      "zh": "由于部分功能（服务端发送到客户端）难以在沙盒快速测试，单独拆分以进行测试"
+    },
+    "category": "gametool",
+    "preview": true
+  },
+
   "keywords": [
     "chatbot",
     "koishi",
     "plugin"
   ],
-  "devDependencies": {},
   "peerDependencies": {
     "koishi": "^4.17.3"
   }
