@@ -1,103 +1,75 @@
-import { Context, Schema, Plugin } from 'koishi'
-import WebSocket from 'ws';  
-import axios from 'axios';  
-
-const serverStatus: Record<string, number> = {};  //定义数组存放开服维护信息（开服监控API）
+import { Context, Schema, valueMap} from 'koishi'
+import { AdventurePlugin } from './AdventurePlugin';
+import { config } from 'process';
+import { get } from 'http';
 
 
 
 export const name = 'onlytest-flyneverride'
 
-export interface Config {}
+interface Receiver {  //设定推送列表数组内容
+  platform: string
+  guildName: string
+  guildId: string
+}
 
-export const Config: Schema<Config> = Schema.object({})
+const Receiver: Schema<Receiver> = Schema.object({  //列表形式数组
+  platform: Schema.string().required().description('平台名称'),
+  guildName: Schema.string().required().description('组群 名称'),
+  guildId: Schema.string().description('群组 ID')
+})
 
-export function apply(ctx: Context) {
-  ctx.plugin(AdventurePlugin);  
+export interface Config {  //由于配置文件复杂，暂时不会写Config接口，放弃！开摆！
+  // enabled: boolean
+  // endpoint: string
+  // token: string
+  // administratorId:string
+  // rules: Receiver[]
+} 
+
+export const Config: Schema<Config> = Schema.intersect([  //配置界面
+  Schema.object({  
+    enabled: Schema.boolean().default(false)
+  }).description('监听功能'),
+  Schema.union([
+    Schema.object({
+      enabled: Schema.const(true).required(),
+      endpoint: Schema.string().required().description('API地址'),
+      token: Schema.string().required().description('鉴权令牌'),
+      administratorId: Schema.string().description('管理员ID，将连接状态实时推送至该账号，可自行选择是否启用'),
+      rules: Schema.array(Receiver).role('table').description('推送规则列表。')
+    }),
+    Schema.object({}),
+  ])
+])
+ 
+
+export function apply(ctx: Context, Config) { //主函数
+  let guildId = Config.rules.map(rules => {  //新建一个guildId数组，将群号遍历后存入
+    return `${rules.guildId}`;  
+  });
+
+  let getInfo = {
+    'endpoint':Config.endpoint+'/v1/message.create',
+    'administratorId':Config.administratorId,
+    'token':Config.token,
+    'guildId':guildId
+  }
+  
+  guildId.forEach(Element => { 
+    console.log(Element)
+  });
+
+
+  console.log(Config.enabled);
+  if (Config.enabled) {  
+    // 如果Config.enabled为true，执行AdventurePlugin  
+    AdventurePlugin(ctx, getInfo);  
+  } else {  
+    // 如果Config.enabled为false，则不执行AdventurePlugin，可以在这里添加日志或其他操作  
+    console.log('未开启事件监听功能');  
+  }
   // write your plugin here
 }
 
-export const AdventurePlugin: Plugin = (ctx: Context) => {
-  // WebSocket连接配置  
-  const wsUrl = 'wss://socket.nicemoe.cn';  
-  const ws = new WebSocket(wsUrl);  
- 
-  
-  ws.on('open', () => {  
-    console.log('WebSocket connection');
-    // 可以在此处发送验证token的请求，如果需要的话 
 
-    // 假设你已经有了需要验证的token  
-    //const tokenToVerify = "cdbc9db08e9db0d069";  
-    
-    // 构建请求体  
-    // const requestBody = { 
-    //   "token": "cdbc9db08e9db0d069", 
-    //   "ticket": "b77d9aa798ca4866bbcd016b6556855d:13645413454:kingsoft::OXVvNnpwOHYxbm01ajE0eQ==" 
-    // }
-    
-    // 发送POST请求验证token  
-    // axios.post('https://www.jx3api.com/data/token/wss/token', requestBody)  
-    //   .then(response => {  
-    //     // 处理返回的数据  
-    //     if (response.data.code === 200) {  
-    //       console.log('Token验证成功:', response.data);  
-    //       // 在此处可以继续你的WebSocket逻辑或进行其他操作  
-    //     } else {  
-    //       console.error('Token验证失败:', response.data);  
-    //       // 处理验证失败的情况  
-    //     }  
-    //   })  
-    //   .catch(error => {  
-    //     // 处理网络错误或其他异常情况  
-    //     console.error('请求验证token时出错:', error);  
-    //   });   
-   
-  });  
-  
-  ws.on('message', (data) => {  
-    const message = JSON.parse(data.toString());  
-    handleAdventureMessage(ctx, message);  
-  });  
-  
-  ws.on('close', () => {  
-    console.log('WebSocket connection closed');  
-    // 处理重连逻辑，如果需要的话  
-  });  
-  
-  ws.on('error', (error) => {  
-    console.error('WebSocket error:', error);  
-    // 处理错误逻辑  
-  });  
-  
-  function handleAdventureMessage(ctx: Context, message: any) {  
-    if (message.action === 2001) {  //开服监控
-      const { server, status } = message.data;  
-      serverStatus[server] = status;  
-      // 在这里可以根据状态更新做一些操作，比如发送通知等  
-      //ctx.sendMessage(`服务器 ${server} 的状态已更新为 ${status ? '开服' : '维护'}`); 
-      return(`服务器 ${server} 的状态已更新为 ${status ? '开服' : '维护'}`); 
-    }
-
-    if (message.action === 2002) {  //新闻资讯
-      const {type, title, url, date}= message.data;  
-      // 处理接收到的新闻数据，例如发送到聊天群或者存储起来  
-      return(`新闻资讯：${title}\n详情链接：${url}\n发布日期：${date}`);  
-    }  
-
-    if (message.action === 2003) {  //游戏更新
-      const { old_version, new_version, package_num, package_size } = message.data;  
-      // 发送版本更新通知  
-      return(`客户端版本已更新！\n旧版本：${old_version}\n新版本：${new_version}\n更新包数量：${package_num}\n更新包大小：${package_size}`);  
-    }  
-
-    if (message.action === 2004) {  //八卦速报
-      const { subclass, server, name, title, url, date } = message.data;  
-      // 发送818速报通知  
-      return(`百度贴吧818速报：\n子类：${subclass}\n服务器：${server}\n版块：${name}\n标题：${title}\n链接：${url}\n日期：${date}`);  
-    }  
-  }  
-  
-  // 可以在此添加其他Koishi事件处理逻辑  
- 
-}
