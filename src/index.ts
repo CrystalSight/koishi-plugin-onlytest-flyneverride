@@ -10,12 +10,14 @@ export const name = 'onlytest-flyneverride'
 interface Receiver {  //设定推送列表数组内容
   platform: string
   guildName: string
+  defaultServer: string
   guildId: string
 }
 
 const Receiver: Schema<Receiver> = Schema.object({  //列表形式数组
   platform: Schema.string().required().description('平台名称'),
   guildName: Schema.string().required().description('组群 名称'),
+  defaultServer:Schema.string().required().description('默认区服'),
   guildId: Schema.string().description('群组 ID')
 })
 
@@ -46,17 +48,21 @@ export const Config: Schema<Config> = Schema.intersect([  //配置界面
 
 export function apply(ctx: Context, Config) { //主函数
   let guildId = Config.rules.map(rules => {  //新建一个guildId数组，将群号遍历后存入
-    return `${rules.guildId}`;  
+    return `${rules.guildId}`; 
+  });
+  let defaultServer = Config.rules.map(rules => {  //新建一个defaultServer数组，将默认区服遍历后存入
+    return `${rules.defaultServer}`;   
   });
 
   let getInfo = {
     'endpoint':Config.endpoint+'/v1/message.create',
     'administratorId':Config.administratorId,
     'token':Config.token,
-    'guildId':guildId
+    'guildId':guildId,
+    'defaultServer':defaultServer
   }
   
-  guildId.forEach(Element => { 
+  defaultServer.forEach(Element => { 
     console.log(Element)
   });
 
