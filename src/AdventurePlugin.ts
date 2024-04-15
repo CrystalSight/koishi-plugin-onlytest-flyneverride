@@ -45,7 +45,7 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
   const wsUrl = 'wss://socket.nicemoe.cn';  
   const ws = new WebSocket(wsUrl);
   let date = new Date();
-  let nowDate = new Intl.DateTimeFormat('zn-CH', {
+  let nowDate = new Intl.DateTimeFormat('zh-CN', {
     dateStyle: 'full',
     timeStyle: 'full',
     timeZone: 'Asia/shanghai',
