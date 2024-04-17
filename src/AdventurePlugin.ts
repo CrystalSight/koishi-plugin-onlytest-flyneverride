@@ -38,12 +38,7 @@ export function pushFunction(axios, getInfo, getmessage){  //普通推送事件�
     axios.post(pushurl, pushmessage, { headers })
   });
 }
-
-
-export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; administratorId: any; token: any; guildId: any; defaultServer:any; }) =>{  //监听函数 
-    // WebSocket连接配置
-  const wsUrl = 'wss://socket.nicemoe.cn';  
-  const ws = new WebSocket(wsUrl);
+export function getNowDate(){  //获取当前时间
   let date = new Date();
   let nowDate = new Intl.DateTimeFormat('zh-CN', {
     dateStyle: 'full',
@@ -51,7 +46,19 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
     timeZone: 'Asia/shanghai',
   }).format(date) 
 
+  return nowDate;
+}
+
+
+
+export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; administratorId: any; token: any; guildId: any; defaultServer:any; }) =>{  //监听函数 
+    // WebSocket连接配置
+  const wsUrl = 'wss://socket.nicemoe.cn';  
+  const ws = new WebSocket(wsUrl);
+ 
+
   ws.on('open', () => {  //连接成功
+    let nowDate = getNowDate();
     console.log('WebSocket connection');
     let getmessage = `连接成功 \n${nowDate}`;
     pushAdministFunction(axios,getInfo,getmessage);  //当连接成功时调用（向管理员账户发送信息）
@@ -63,6 +70,7 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
   });  
   
   ws.on('close', () => {  //断开连接
+    let nowDate = getNowDate();
     console.log('WebSocket connection closed');  
     let getmessage =`连接断开 \n${nowDate}`;
     pushAdministFunction(axios,getInfo,getmessage);  //当断开连接时调用（向管理员账户发送信息）
@@ -71,6 +79,7 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
   });  
   
   ws.on('error', (error) => {  //连接错误
+    let nowDate = getNowDate();
     console.error('WebSocket error:', error); 
     let getmessage =`连接错误 \n${nowDate}`;
     pushAdministFunction(axios,getInfo,getmessage);  //当连接错误时调用（向管理员账户发送信息） 
@@ -81,7 +90,8 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
     const serverStatus: Record<string, number> = {};  //定义对象存放开服维护信息（开服监控API）
     if (message.action === 2001) {  //开服监控
       const { server, status } = message.data;  
-      serverStatus[server] = status; 
+      serverStatus[server] = status;
+      let nowDate = getNowDate(); 
       let getmessage = `服务器 ${server} 的状态已更新为 ${status ? '开服' : '维护'}\n${nowDate}`;
       
       const pushurl = getInfo.endpoint;
@@ -102,7 +112,6 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
           axios.post(pushurl, pushmessage, { headers })
         }
       });
-      //pushFunction(axios,getInfo,getmessage);  //当action2001时，向用户端推送 开服 消息
     }
 
     if (message.action === 2002) {  //新闻资讯
@@ -112,7 +121,8 @@ export const AdventurePlugin = (ctx: Context,getInfo: { endpoint: string; admini
     }  
 
     if (message.action === 2003) {  //游戏更新
-      const { old_version, new_version, package_num, package_size } = message.data;  
+      const { old_version, new_version, package_num, package_size } = message.data; 
+      let nowDate = getNowDate(); 
       let getmessage = `客户端版本已更新！\n旧版本：${old_version}\n新版本：${new_version}\n更新包数量：${package_num}\n更新包大小：${package_size}\n${nowDate}`;
       pushFunction(axios,getInfo,getmessage);  //当action2003时，向用户端推送 更新 消息  
     }  
