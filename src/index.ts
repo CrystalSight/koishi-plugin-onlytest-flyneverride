@@ -39,6 +39,11 @@ export const Config: Schema<Config> = Schema.intersect([  //配置界面
       endpoint: Schema.string().required().description('API地址'),
       token: Schema.string().required().description('鉴权令牌'),
       administratorId: Schema.string().description('管理员ID，将连接状态实时推送至该账号，可自行选择是否启用'),
+      functionList: Schema
+        .array(Schema.union(['开服监控', '新闻资讯', '游戏更新', '贴吧速报', '关隘预告', '云从预告']))
+        .default(['开服监控', '新闻资讯', '游戏更新'])
+        .role('checkbox')
+        .description('选择需要开启的监听功能'),
       rules: Schema.array(Receiver).role('table').description('推送规则列表。')
     }),
     Schema.object({}),
@@ -58,10 +63,11 @@ export function apply(ctx: Context, Config) { //主函数
     'endpoint':Config.endpoint+'/v1/message.create',
     'administratorId':Config.administratorId,
     'token':Config.token,
+    'functionList':Config.functionList,
     'guildId':guildId,
     'defaultServer':defaultServer
   }
-  
+  console.log(getInfo.functionList);
   defaultServer.forEach(Element => { 
     console.log(Element)
   });
@@ -76,6 +82,7 @@ export function apply(ctx: Context, Config) { //主函数
     console.log('未开启事件监听功能');  
   }
   // write your plugin here
+
 }
 
 
