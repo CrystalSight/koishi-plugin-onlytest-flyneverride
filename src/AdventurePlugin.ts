@@ -55,18 +55,19 @@ export const AdventurePlugin = (ctx: Context, getInfo: { endpoint: string; admin
   // WebSocket连接配置
   const wsUrl = 'wss://socket.nicemoe.cn';
   const ws = new WebSocket(wsUrl);
+  const functionList = getInfo.functionList;
 
 
   ws.on('open', () => {  //连接成功
     let nowDate = getNowDate();
     console.log('WebSocket connection');
     let getmessage = `连接成功 \n` +
-      `开服监控：${getInfo.functionList.includes('开服监控')}\n` +
-      `新闻资讯：${getInfo.functionList.includes('新闻资讯')}\n` +
-      `游戏更新：${getInfo.functionList.includes('游戏更新')}\n` +
-      `贴吧速报：${getInfo.functionList.includes('贴吧速报')}\n` +
-      `关隘预告：${getInfo.functionList.includes('关隘预告')}\n` +
-      `云从预告：${getInfo.functionList.includes('云从预告')}\n` +
+      `开服监控：${functionList.includes('开服监控')}\n` +
+      `新闻资讯：${functionList.includes('新闻资讯')}\n` +
+      `游戏更新：${functionList.includes('游戏更新')}\n` +
+      `贴吧速报：${functionList.includes('贴吧速报')}\n` +
+      `关隘预告：${functionList.includes('关隘预告')}\n` +
+      `云从预告：${functionList.includes('云从预告')}\n` +
       `${nowDate}`;
     pushAdministFunction(axios, getInfo, getmessage);  //当连接成功时调用（向管理员账户发送信息）
   });
@@ -95,8 +96,7 @@ export const AdventurePlugin = (ctx: Context, getInfo: { endpoint: string; admin
 
   function handleAdventureMessage(ctx: Context, message: any, getInfo: { endpoint: string; administratorId: any; functionList: any, token: any; guildId: any; defaultServer: any; }) {  //message事件处理函数
     const serverStatus: Record<string, number> = {};  //定义对象存放开服维护信息（开服监控API）
-    if (message.action === 2001) {  //开服监控
-      if (getInfo.functionList.includes('开服监控')) {
+    if (message.action === 2001 && functionList.includes('开服监控')) {  //开服监控
         const { server, status } = message.data;
         serverStatus[server] = status;
         let nowDate = getNowDate();
@@ -120,33 +120,31 @@ export const AdventurePlugin = (ctx: Context, getInfo: { endpoint: string; admin
             axios.post(pushurl, pushmessage, { headers })
           }
         });
-      }
-
     }
 
-    if (message.action === 2002) {  //新闻资讯
+    if (message.action === 2002 && functionList.includes('新闻资讯')) {  //新闻资讯
       const { type, title, url, date } = message.data;
       let getmessage = `新闻资讯：${title}\n详情链接：${url}\n发布日期：${date}`;
-      if (getInfo.functionList.includes('新闻资讯')) {
-        pushFunction(axios, getInfo, getmessage);  //当action2002时，向用户端推送 新闻资讯 消息 
-      }
+
+      pushFunction(axios, getInfo, getmessage);  //当action2002时，向用户端推送 新闻资讯 消息 
+
     }
 
-    if (message.action === 2003) {  //游戏更新
+    if (message.action === 2003 && functionList.includes('游戏更新')) {  //游戏更新
       const { old_version, new_version, package_num, package_size } = message.data;
       let nowDate = getNowDate();
       let getmessage = `客户端版本已更新！\n旧版本：${old_version}\n新版本：${new_version}\n更新包数量：${package_num}\n更新包大小：${package_size}\n${nowDate}`;
-      if (getInfo.functionList.includes('游戏更新')) {
-        pushFunction(axios, getInfo, getmessage);  //当action2003时，向用户端推送 更新 消息  
-      }
+
+      pushFunction(axios, getInfo, getmessage);  //当action2003时，向用户端推送 更新 消息  
+
     }
 
-    if (message.action === 2004) {  //八卦速报
+    if (message.action === 2004 && functionList.includes('贴吧速报')) {  //八卦速报
       const { subclass, server, name, title, url, date } = message.data;
       let getmessage = `百度贴吧818速报：\n子类：${subclass}\n服务器：${server}\n版块：${name}\n标题：${title}\n链接：${url}\n日期：${date}`;
-      if (getInfo.functionList.includes('贴吧速报')) {
-        pushFunction(axios, getInfo, getmessage);  //当action2004时，向用户端推送 818 消息  
-      }
+
+      pushFunction(axios, getInfo, getmessage);  //当action2004时，向用户端推送 818 消息  
+
     }
   }
 

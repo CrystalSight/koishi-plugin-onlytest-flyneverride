@@ -1,7 +1,5 @@
 import { Context, Schema, valueMap} from 'koishi'
 import { AdventurePlugin } from './AdventurePlugin';
-import { config } from 'process';
-import { get } from 'http';
 
 
 
